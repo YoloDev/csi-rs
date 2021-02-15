@@ -1,4 +1,4 @@
-use super::{secrets::Secrets, CapacityRange, VolumeCapability};
+use super::{CapacityRange, Secrets, VolumeCapability};
 use crate::proto;
 use std::{
   collections::HashMap,
@@ -133,16 +133,22 @@ pub enum ControllerExpandVolumeError {
   Other(#[from] tonic::Status),
 }
 
+use tonic::{Code, Status};
 impl From<ControllerExpandVolumeError> for tonic::Status {
   fn from(value: ControllerExpandVolumeError) -> Self {
-    use tonic::{Code, Status};
-
     match value {
-      ControllerExpandVolumeError::ExceedsCapabilities(v) => Status::new(Code::InvalidArgument, v),
-      ControllerExpandVolumeError::VolumeNotFound(v) => Status::new(Code::NotFound, v),
-      ControllerExpandVolumeError::VolumeInUse(v) => Status::new(Code::FailedPrecondition, v),
-      ControllerExpandVolumeError::UnsupportedCapacityRange(v) => Status::new(Code::OutOfRange, v),
       ControllerExpandVolumeError::Other(v) => v,
+      value => {
+        let code = match &value {
+          ControllerExpandVolumeError::ExceedsCapabilities(_) => Code::InvalidArgument,
+          ControllerExpandVolumeError::VolumeNotFound(_) => Code::NotFound,
+          ControllerExpandVolumeError::VolumeInUse(_) => Code::FailedPrecondition,
+          ControllerExpandVolumeError::UnsupportedCapacityRange(_) => Code::OutOfRange,
+          ControllerExpandVolumeError::Other(_) => unreachable!(),
+        };
+
+        Status::new(code, value.to_string())
+      }
     }
   }
 }

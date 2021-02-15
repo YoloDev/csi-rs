@@ -1,40 +1,10 @@
-use super::{Secrets, Topology, VolumeCapability, VolumeContentSource};
+use super::{CapacityRange, Secrets, Topology, VolumeCapability, VolumeContentSource};
 use crate::proto;
 use std::{
   collections::HashMap,
   convert::{TryFrom, TryInto},
-  num::NonZeroU64,
 };
 use thiserror::Error;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum CapacityRange {
-  AtLeast(NonZeroU64),
-  AtMost(NonZeroU64),
-  /// Effectively AtLeast(.0) & AtMost(.1)
-  Between(NonZeroU64, NonZeroU64),
-}
-
-impl TryFrom<proto::CapacityRange> for CapacityRange {
-  type Error = tonic::Status;
-
-  fn try_from(value: proto::CapacityRange) -> Result<Self, Self::Error> {
-    match (value.required_bytes, value.limit_bytes) {
-      (r, _) if r < 0 => Err(tonic::Status::invalid_argument(
-        "CapacityRange.required_bytes cannot be negative",
-      )),
-      (_, l) if l < 0 => Err(tonic::Status::invalid_argument(
-        "CapacityRange.limit_bytes cannot be negative",
-      )),
-      (r, 0) => Ok(CapacityRange::AtLeast(NonZeroU64::new(r as u64).unwrap())),
-      (0, l) => Ok(CapacityRange::AtMost(NonZeroU64::new(l as u64).unwrap())),
-      (r, l) => Ok(CapacityRange::Between(
-        NonZeroU64::new(r as u64).unwrap(),
-        NonZeroU64::new(l as u64).unwrap(),
-      )),
-    }
-  }
-}
 
 #[derive(Debug)]
 pub enum TopologyRequirement {
@@ -284,17 +254,23 @@ pub enum CreateVolumeError {
   Other(#[from] tonic::Status),
 }
 
+use tonic::{Code, Status};
 impl From<CreateVolumeError> for tonic::Status {
   fn from(value: CreateVolumeError) -> tonic::Status {
-    use tonic::{Code, Status};
-
     match value {
-      CreateVolumeError::SourceIncompatible(v) => Status::new(Code::InvalidArgument, v),
-      CreateVolumeError::SourceNotFound(v) => Status::new(Code::NotFound, v),
-      CreateVolumeError::AlreadyExists(v) => Status::new(Code::AlreadyExists, v),
-      CreateVolumeError::UnableToProvision(v) => Status::new(Code::ResourceExhausted, v),
-      CreateVolumeError::UnsupportedCapacityRange(v) => Status::new(Code::OutOfRange, v),
       CreateVolumeError::Other(v) => v,
+      value => {
+        let code = match &value {
+          CreateVolumeError::SourceIncompatible(_) => Code::InvalidArgument,
+          CreateVolumeError::SourceNotFound(_) => Code::NotFound,
+          CreateVolumeError::AlreadyExists(_) => Code::AlreadyExists,
+          CreateVolumeError::UnableToProvision(_) => Code::ResourceExhausted,
+          CreateVolumeError::UnsupportedCapacityRange(_) => Code::OutOfRange,
+          CreateVolumeError::Other(_) => unreachable!(),
+        };
+
+        Status::new(code, value.to_string())
+      }
     }
   }
 }

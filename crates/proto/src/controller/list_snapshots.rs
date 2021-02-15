@@ -1,4 +1,4 @@
-use super::{secrets::Secrets, Snapshot};
+use super::{Secrets, Snapshot};
 use crate::proto;
 use std::{
   collections::HashMap,
@@ -151,13 +151,19 @@ pub enum ListSnapshotsError {
   Other(#[from] tonic::Status),
 }
 
+use tonic::{Code, Status};
 impl From<ListSnapshotsError> for tonic::Status {
   fn from(value: ListSnapshotsError) -> Self {
-    use tonic::{Code, Status};
-
     match value {
-      ListSnapshotsError::InvalidStartingToken(v) => Status::new(Code::Aborted, v),
       ListSnapshotsError::Other(v) => v,
+      value => {
+        let code = match &value {
+          ListSnapshotsError::InvalidStartingToken(_) => Code::Aborted,
+          ListSnapshotsError::Other(_) => unreachable!(),
+        };
+
+        Status::new(code, value.to_string())
+      }
     }
   }
 }

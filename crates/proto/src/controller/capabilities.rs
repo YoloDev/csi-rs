@@ -56,12 +56,11 @@ bitflags! {
   }
 }
 
+use proto::controller_service_capability::rpc::Type;
 impl TryFrom<ControllerCapabilities> for proto::ControllerGetCapabilitiesResponse {
   type Error = tonic::Status;
 
   fn try_from(value: ControllerCapabilities) -> Result<Self, Self::Error> {
-    use proto::controller_service_capability::rpc::Type;
-
     #[inline]
     fn push_cap(
       vec: &mut Vec<proto::ControllerServiceCapability>,

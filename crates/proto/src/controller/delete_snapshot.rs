@@ -1,4 +1,4 @@
-use super::secrets::Secrets;
+use super::Secrets;
 use crate::proto;
 use std::{collections::HashMap, convert::TryFrom};
 use thiserror::Error;
@@ -70,14 +70,20 @@ pub enum DeleteSnapshotError {
   Other(#[from] tonic::Status),
 }
 
+use tonic::{Code, Status};
 impl From<DeleteSnapshotError> for tonic::Status {
   fn from(value: DeleteSnapshotError) -> Self {
-    use tonic::{Code, Status};
-
     match value {
-      DeleteSnapshotError::SnapshotInUse(v) => Status::new(Code::FailedPrecondition, v),
-      DeleteSnapshotError::Pending(v) => Status::new(Code::Aborted, v),
       DeleteSnapshotError::Other(v) => v,
+      value => {
+        let code = match &value {
+          DeleteSnapshotError::SnapshotInUse(_) => Code::FailedPrecondition,
+          DeleteSnapshotError::Pending(_) => Code::Aborted,
+          DeleteSnapshotError::Other(_) => unreachable!(),
+        };
+
+        Status::new(code, value.to_string())
+      }
     }
   }
 }

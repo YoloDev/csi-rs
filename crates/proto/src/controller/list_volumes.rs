@@ -123,13 +123,19 @@ pub enum ListVolumesError {
   Other(#[from] tonic::Status),
 }
 
+use tonic::{Code, Status};
 impl From<ListVolumesError> for tonic::Status {
   fn from(value: ListVolumesError) -> Self {
-    use tonic::{Code, Status};
-
     match value {
-      ListVolumesError::InvalidStartingToken(v) => Status::new(Code::Aborted, v),
       ListVolumesError::Other(v) => v,
+      value => {
+        let code = match &value {
+          ListVolumesError::InvalidStartingToken(_) => Code::Aborted,
+          ListVolumesError::Other(_) => unreachable!(),
+        };
+
+        Status::new(code, value.to_string())
+      }
     }
   }
 }

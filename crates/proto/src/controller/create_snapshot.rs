@@ -1,4 +1,4 @@
-use super::secrets::Secrets;
+use super::Secrets;
 use crate::proto;
 use std::{collections::HashMap, convert::TryFrom};
 use thiserror::Error;
@@ -114,15 +114,21 @@ pub enum CreateSnapshotError {
   Other(#[from] tonic::Status),
 }
 
+use tonic::{Code, Status};
 impl From<CreateSnapshotError> for tonic::Status {
   fn from(value: CreateSnapshotError) -> Self {
-    use tonic::{Code, Status};
-
     match value {
-      CreateSnapshotError::AlreadyExists(v) => Status::new(Code::AlreadyExists, v),
-      CreateSnapshotError::Pending(v) => Status::new(Code::Aborted, v),
-      CreateSnapshotError::NotEnoughSpace(v) => Status::new(Code::ResourceExhausted, v),
       CreateSnapshotError::Other(v) => v,
+      value => {
+        let code = match &value {
+          CreateSnapshotError::AlreadyExists(_) => Code::AlreadyExists,
+          CreateSnapshotError::Pending(_) => Code::Aborted,
+          CreateSnapshotError::NotEnoughSpace(_) => Code::ResourceExhausted,
+          CreateSnapshotError::Other(_) => unreachable!(),
+        };
+
+        Status::new(code, value.to_string())
+      }
     }
   }
 }

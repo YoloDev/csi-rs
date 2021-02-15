@@ -9,23 +9,21 @@ mod get_volume;
 mod list_snapshots;
 mod list_volumes;
 mod publish_volume;
-mod secrets;
 mod snapshot;
 mod unpublish_volume;
 mod validate_volume_capabilities;
-mod volume;
-mod volume_status;
 
 use crate::{
   plugin, proto,
+  secrets::*,
   utils::{record_request, Record},
   IdentityService,
 };
 use async_trait::async_trait;
-use secrets::*;
 use std::{convert::TryInto, sync::Arc};
 use tracing::instrument;
 
+pub use crate::volume::*;
 pub use capabilities::*;
 pub use create_snapshot::*;
 pub use create_volume::*;
@@ -40,8 +38,6 @@ pub use publish_volume::*;
 pub use snapshot::*;
 pub use unpublish_volume::*;
 pub use validate_volume_capabilities::*;
-pub use volume::*;
-pub use volume_status::*;
 
 #[async_trait]
 pub trait ControllerService: IdentityService {
@@ -335,7 +331,7 @@ struct Controller<T: ControllerService>(Arc<T>);
 #[async_trait]
 impl<T: ControllerService> proto::identity_server::Identity for Controller<T> {
   #[instrument(
-    name = "Identity.get_plugin_info",
+    name = "identity.get_plugin_info",
     skip(self, _request),
     fields(name, vendor_version, manifest)
   )]
@@ -353,7 +349,7 @@ impl<T: ControllerService> proto::identity_server::Identity for Controller<T> {
   }
 
   // TODO: Instrument response
-  #[instrument(name = "Identity.get_plugin_capabilities", skip(self, _request))]
+  #[instrument(name = "identity.get_plugin_capabilities", skip(self, _request))]
   async fn get_plugin_capabilities(
     &self,
     _request: tonic::Request<proto::GetPluginCapabilitiesRequest>,
@@ -370,7 +366,7 @@ impl<T: ControllerService> proto::identity_server::Identity for Controller<T> {
     Ok(tonic::Response::new(response))
   }
 
-  #[instrument(name = "Identity.probe", skip(self, _request), fields(ready))]
+  #[instrument(name = "identity.probe", skip(self, _request), fields(ready))]
   async fn probe(
     &self,
     _request: tonic::Request<proto::ProbeRequest>,
@@ -386,7 +382,7 @@ impl<T: ControllerService> proto::identity_server::Identity for Controller<T> {
 #[async_trait]
 impl<T: ControllerService> proto::controller_server::Controller for Controller<T> {
   #[instrument(
-    name = "Controller.create_volume",
+    name = "controller.create_volume",
     skip(self, request),
     fields(request, response)
   )]
@@ -405,7 +401,7 @@ impl<T: ControllerService> proto::controller_server::Controller for Controller<T
   }
 
   #[instrument(
-    name = "Controller.delete_volume",
+    name = "controller.delete_volume",
     skip(self, request),
     fields(request)
   )]
@@ -420,7 +416,7 @@ impl<T: ControllerService> proto::controller_server::Controller for Controller<T
   }
 
   #[instrument(
-    name = "Controller.controller_publish_volume",
+    name = "controller.controller_publish_volume",
     skip(self, request),
     fields(request, response)
   )]
@@ -439,7 +435,7 @@ impl<T: ControllerService> proto::controller_server::Controller for Controller<T
   }
 
   #[instrument(
-    name = "Controller.controller_unpublish_volume",
+    name = "controller.controller_unpublish_volume",
     skip(self, request),
     fields(request)
   )]
@@ -454,7 +450,7 @@ impl<T: ControllerService> proto::controller_server::Controller for Controller<T
   }
 
   #[instrument(
-    name = "Controller.validate_volume_capabilities",
+    name = "controller.validate_volume_capabilities",
     skip(self, request),
     fields(request, response)
   )]
@@ -473,7 +469,7 @@ impl<T: ControllerService> proto::controller_server::Controller for Controller<T
   }
 
   #[instrument(
-    name = "Controller.list_volumes",
+    name = "controller.list_volumes",
     skip(self, request),
     fields(request, response)
   )]
@@ -492,7 +488,7 @@ impl<T: ControllerService> proto::controller_server::Controller for Controller<T
   }
 
   #[instrument(
-    name = "Controller.get_capacity",
+    name = "controller.get_capacity",
     skip(self, request),
     fields(request, response)
   )]
@@ -511,7 +507,7 @@ impl<T: ControllerService> proto::controller_server::Controller for Controller<T
   }
 
   #[instrument(
-    name = "Controller.controller_get_capabilities",
+    name = "controller.controller_get_capabilities",
     skip(self),
     fields(response)
   )]
@@ -524,7 +520,7 @@ impl<T: ControllerService> proto::controller_server::Controller for Controller<T
   }
 
   #[instrument(
-    name = "Controller.create_snapshot",
+    name = "controller.create_snapshot",
     skip(self, request),
     fields(request, response)
   )]
@@ -543,7 +539,7 @@ impl<T: ControllerService> proto::controller_server::Controller for Controller<T
   }
 
   #[instrument(
-    name = "Controller.delete_snapshot",
+    name = "controller.delete_snapshot",
     skip(self, request),
     fields(request)
   )]
@@ -558,7 +554,7 @@ impl<T: ControllerService> proto::controller_server::Controller for Controller<T
   }
 
   #[instrument(
-    name = "Controller.list_snapshots",
+    name = "controller.list_snapshots",
     skip(self, request),
     fields(request, response)
   )]
@@ -577,7 +573,7 @@ impl<T: ControllerService> proto::controller_server::Controller for Controller<T
   }
 
   #[instrument(
-    name = "Controller.controller_expand_volume",
+    name = "controller.controller_expand_volume",
     skip(self, request),
     fields(request, response)
   )]
@@ -596,7 +592,7 @@ impl<T: ControllerService> proto::controller_server::Controller for Controller<T
   }
 
   #[instrument(
-    name = "Controller.controller_get_volume",
+    name = "controller.controller_get_volume",
     skip(self, request),
     fields(request, response)
   )]

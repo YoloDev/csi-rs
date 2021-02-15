@@ -13,9 +13,11 @@ macro_rules! unsupported {
 
 pub mod controller;
 pub mod node;
+pub mod volume;
 
 mod plugin;
 mod proto;
+mod secrets;
 mod utils;
 
 use std::collections::HashMap;

@@ -173,21 +173,23 @@ pub enum ControllerPublishVolumeError {
   Other(#[from] tonic::Status),
 }
 
+use tonic::{Code, Status};
 impl From<ControllerPublishVolumeError> for tonic::Status {
   fn from(value: ControllerPublishVolumeError) -> tonic::Status {
-    use tonic::{Code, Status};
-
     match value {
-      ControllerPublishVolumeError::VolumeDoesNotExist(v) => Status::new(Code::NotFound, v),
-      ControllerPublishVolumeError::NodeDoesNotExist(v) => Status::new(Code::NotFound, v),
-      ControllerPublishVolumeError::AlreadyExists(v) => Status::new(Code::AlreadyExists, v),
-      ControllerPublishVolumeError::PublishedToAnotherNode(v) => {
-        Status::new(Code::FailedPrecondition, v)
-      }
-      ControllerPublishVolumeError::MaxVolumesAttached(v) => {
-        Status::new(Code::ResourceExhausted, v)
-      }
       ControllerPublishVolumeError::Other(v) => v,
+      value => {
+        let code = match &value {
+          ControllerPublishVolumeError::VolumeDoesNotExist(_) => Code::NotFound,
+          ControllerPublishVolumeError::NodeDoesNotExist(_) => Code::NotFound,
+          ControllerPublishVolumeError::AlreadyExists(_) => Code::AlreadyExists,
+          ControllerPublishVolumeError::PublishedToAnotherNode(_) => Code::FailedPrecondition,
+          ControllerPublishVolumeError::MaxVolumesAttached(_) => Code::ResourceExhausted,
+          ControllerPublishVolumeError::Other(_) => unreachable!(),
+        };
+
+        Status::new(code, value.to_string())
+      }
     }
   }
 }

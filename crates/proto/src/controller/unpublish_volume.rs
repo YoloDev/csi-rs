@@ -90,14 +90,20 @@ pub enum ControllerUnpublishVolumeError {
   Other(#[from] tonic::Status),
 }
 
+use tonic::{Code, Status};
 impl From<ControllerUnpublishVolumeError> for tonic::Status {
   fn from(value: ControllerUnpublishVolumeError) -> Self {
-    use tonic::{Code, Status};
-
     match value {
-      ControllerUnpublishVolumeError::VolumeNotFound(v) => Status::new(Code::NotFound, v),
-      ControllerUnpublishVolumeError::NodeNotFound(v) => Status::new(Code::NotFound, v),
       ControllerUnpublishVolumeError::Other(v) => v,
+      value => {
+        let code = match &value {
+          ControllerUnpublishVolumeError::VolumeNotFound(_) => Code::NotFound,
+          ControllerUnpublishVolumeError::NodeNotFound(_) => Code::NotFound,
+          ControllerUnpublishVolumeError::Other(_) => unreachable!(),
+        };
+
+        Status::new(code, value.to_string())
+      }
     }
   }
 }

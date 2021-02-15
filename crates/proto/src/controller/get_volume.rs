@@ -62,13 +62,19 @@ pub enum ControllerGetVolumeError {
   Other(#[from] tonic::Status),
 }
 
+use tonic::{Code, Status};
 impl From<ControllerGetVolumeError> for tonic::Status {
   fn from(value: ControllerGetVolumeError) -> Self {
-    use tonic::{Code, Status};
-
     match value {
-      ControllerGetVolumeError::VolumeNotFound(v) => Status::new(Code::NotFound, v),
       ControllerGetVolumeError::Other(v) => v,
+      value => {
+        let code = match &value {
+          ControllerGetVolumeError::VolumeNotFound(_) => Code::NotFound,
+          ControllerGetVolumeError::Other(_) => unreachable!(),
+        };
+
+        Status::new(code, value.to_string())
+      }
     }
   }
 }

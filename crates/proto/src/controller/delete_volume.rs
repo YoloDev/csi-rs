@@ -40,13 +40,19 @@ pub enum DeleteVolumeError {
   Other(#[from] tonic::Status),
 }
 
+use tonic::{Code, Status};
 impl From<DeleteVolumeError> for tonic::Status {
   fn from(value: DeleteVolumeError) -> tonic::Status {
-    use tonic::{Code, Status};
-
     match value {
-      DeleteVolumeError::VolumeInUse(v) => Status::new(Code::FailedPrecondition, v),
       DeleteVolumeError::Other(v) => v,
+      value => {
+        let code = match &value {
+          DeleteVolumeError::VolumeInUse(_) => Code::FailedPrecondition,
+          DeleteVolumeError::Other(_) => unreachable!(),
+        };
+
+        Status::new(code, value.to_string())
+      }
     }
   }
 }
