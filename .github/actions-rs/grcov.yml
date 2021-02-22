@@ -1,5 +1,4 @@
 output-type: lcov
-output-path: ./coverage/lcov.info
 ignore:
   - "/*"
   - "C:/*"
