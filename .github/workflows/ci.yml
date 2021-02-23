@@ -8,14 +8,23 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Install toolchain
+      - name: ⚡ Cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-coverage-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: ⚙ Install toolchain
         uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
           override: true
           profile: minimal
 
-      - name: Execute tests
+      - name: 🔎 Test
         uses: actions-rs/cargo@v1
         with:
           command: test
@@ -25,10 +34,10 @@ jobs:
           RUSTFLAGS: "-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests"
           RUSTDOCFLAGS: "-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests"
 
-      - id: coverage
+      - id: 📃 Collect coverage
         uses: actions-rs/grcov@v0.1
 
-      - name: Coveralls upload
+      - name: 🔼 Coveralls upload
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
