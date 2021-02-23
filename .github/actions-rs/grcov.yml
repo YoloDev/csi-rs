@@ -3,4 +3,4 @@ ignore:
   - "/*"
   - "C:/*"
   - "../*"
-  - "codegen/"
+  - "codegen/*"
