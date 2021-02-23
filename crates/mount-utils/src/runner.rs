@@ -292,7 +292,7 @@ async fn read<R>(receiver: Receiver<Result<R>>) -> Result<R> {
 // use in case of bind mount, due to the fact that bind mount doesn't respect mount options.
 // The list equals:
 //   options - 'bind' + 'remount' (no duplicate)
-fn make_bind_opts(opts: &[Arg]) -> (bool, Vec<Arg>, Vec<Arg>) {
+pub(crate) fn make_bind_opts(opts: &[Arg]) -> (bool, Vec<Arg>, Vec<Arg>) {
   let (bind, bind_opts, bind_remount_opts, _) = make_bind_opts_sensitive(opts, &[]);
   (bind, bind_opts, bind_remount_opts)
 }
@@ -361,4 +361,43 @@ pub trait MounterWrapper {
   fn new(inner: Arc<Self::Mounter>) -> Self;
 
   fn mounter(&self) -> &Arc<Self::Mounter>;
+}
+
+#[cfg(test)]
+mod tests {
+  use std::ffi::OsStr;
+
+  use super::*;
+  use test_case::test_case;
+
+  #[test_case(&["vers=2", "ro", "_netdev"], false, &[], &[])]
+  #[test_case(&["bind", "vers=2", "ro", "_netdev"], true, &["bind", "_netdev"], &["bind", "remount", "vers=2", "ro", "_netdev"])]
+  fn make_bind_opts(
+    mount_option: &[&'static str],
+    is_bind: bool,
+    expected_bind_opts: &[&'static str],
+    expected_remount_opts: &[&'static str],
+  ) {
+    let expected_bind_opts = expected_bind_opts
+      .iter()
+      .map(|s| Arg::<OsStr>::from(*s))
+      .collect::<Vec<_>>();
+    let expected_remount_opts = expected_remount_opts
+      .iter()
+      .map(|s| Arg::<OsStr>::from(*s))
+      .collect::<Vec<_>>();
+
+    let (bind, bind_opts, bind_remount_opts) = super::make_bind_opts(
+      &*mount_option
+        .iter()
+        .map(|s| Arg::from(*s))
+        .collect::<Vec<_>>(),
+    );
+
+    assert_eq!(bind, is_bind);
+    if is_bind {
+      assert_eq!(expected_bind_opts, bind_opts);
+      assert_eq!(expected_remount_opts, bind_remount_opts);
+    }
+  }
 }
