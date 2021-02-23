@@ -24,6 +24,11 @@ jobs:
           override: true
           profile: minimal
 
+      - name: 🧹 Clean
+        uses: actions-rs/cargo@v1
+        with:
+          command: clean
+
       - name: 🔎 Test
         uses: actions-rs/cargo@v1
         with:
@@ -36,6 +41,8 @@ jobs:
 
       - name: 📃 Collect coverage
         uses: actions-rs/grcov@v0.1
+        with:
+          path-to-lcov: ./lcov.info
 
       - name: 🔼 Coveralls upload
         uses: coverallsapp/github-action@master
