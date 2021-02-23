@@ -322,6 +322,7 @@ pub(crate) fn make_bind_opts_sensitive(
       Some("bind") => {
         bind = true;
       }
+      Some("remount") => {}
       Some("_netdev") => {
         // _netdev is a userspace mount option and does not automatically get added when
         // bind mount is created and hence we must carry it over.
@@ -337,6 +338,7 @@ pub(crate) fn make_bind_opts_sensitive(
       Some("bind") => {
         bind = true;
       }
+      Some("remount") => {}
       Some("_netdev") => {
         // _netdev is a userspace mount option and does not automatically get added when
         // bind mount is created and hence we must carry it over.
@@ -396,8 +398,158 @@ mod tests {
 
     assert_eq!(bind, is_bind);
     if is_bind {
-      assert_eq!(expected_bind_opts, bind_opts);
-      assert_eq!(expected_remount_opts, bind_remount_opts);
+      assert_eq!(expected_bind_opts, bind_opts, "bind_opts");
+      assert_eq!(
+        expected_remount_opts, bind_remount_opts,
+        "bind_remount_opts"
+      );
+    }
+  }
+
+  mod make_bind_opts_sensitive {
+    use super::super::*;
+
+    fn into_arg_vec<'a>(it: impl IntoIterator<Item = &'a &'static str>) -> Vec<Arg> {
+      it.into_iter().map(|s| Arg::from(*s)).collect::<Vec<_>>()
+    }
+
+    fn make_bind_opts_sensitive(
+      opts: &[Arg],
+      opts_sensitive: &[Arg],
+      is_bind: bool,
+      expected_bind_opts: &[Arg],
+      expected_remount_opts: &[Arg],
+      expected_remount_opts_sensitive: &[Arg],
+    ) {
+      let (bind, bind_opts, bind_remount_opts, bind_remount_sensitive_opts) =
+        super::super::make_bind_opts_sensitive(opts, opts_sensitive);
+
+      assert_eq!(bind, is_bind);
+      if is_bind {
+        assert_eq!(expected_bind_opts, bind_opts, "bind_opts");
+        assert_eq!(
+          expected_remount_opts, bind_remount_opts,
+          "bind_remount_opts"
+        );
+        assert_eq!(
+          expected_remount_opts_sensitive, bind_remount_sensitive_opts,
+          "bind_remount_sensitive_opts"
+        );
+      }
+    }
+
+    #[test]
+    fn case1() {
+      let mount_opts = into_arg_vec(&["vers=2", "ro", "_netdev"]);
+      let mount_opts_sensitive = into_arg_vec(&["user=foo", "pass=bar"]);
+      let is_bind = false;
+      let expected_bind_opts = into_arg_vec(&[]);
+      let expected_remount_opts = into_arg_vec(&[]);
+      let expected_remount_opts_sensitive = into_arg_vec(&["user=foo", "pass=bar"]);
+
+      make_bind_opts_sensitive(
+        &mount_opts,
+        &mount_opts_sensitive,
+        is_bind,
+        &expected_bind_opts,
+        &expected_remount_opts,
+        &expected_remount_opts_sensitive,
+      );
+    }
+
+    #[test]
+    fn case2() {
+      let mount_opts = into_arg_vec(&["vers=2", "ro", "_netdev"]);
+      let mount_opts_sensitive = into_arg_vec(&["user=foo", "pass=bar", "bind"]);
+      let is_bind = true;
+      let expected_bind_opts = into_arg_vec(&["bind", "_netdev"]);
+      let expected_remount_opts = into_arg_vec(&["bind", "remount", "vers=2", "ro", "_netdev"]);
+      let expected_remount_opts_sensitive = into_arg_vec(&["user=foo", "pass=bar"]);
+
+      make_bind_opts_sensitive(
+        &mount_opts,
+        &mount_opts_sensitive,
+        is_bind,
+        &expected_bind_opts,
+        &expected_remount_opts,
+        &expected_remount_opts_sensitive,
+      );
+    }
+
+    #[test]
+    fn case3() {
+      let mount_opts = into_arg_vec(&["vers=2", "remount", "ro", "_netdev"]);
+      let mount_opts_sensitive = into_arg_vec(&["user=foo", "pass=bar"]);
+      let is_bind = false;
+      let expected_bind_opts = into_arg_vec(&[]);
+      let expected_remount_opts = into_arg_vec(&[]);
+      let expected_remount_opts_sensitive = into_arg_vec(&["user=foo", "pass=bar"]);
+
+      make_bind_opts_sensitive(
+        &mount_opts,
+        &mount_opts_sensitive,
+        is_bind,
+        &expected_bind_opts,
+        &expected_remount_opts,
+        &expected_remount_opts_sensitive,
+      );
+    }
+
+    #[test]
+    fn case4() {
+      let mount_opts = into_arg_vec(&["vers=2", "ro", "_netdev"]);
+      let mount_opts_sensitive = into_arg_vec(&["user=foo", "pass=bar", "remount"]);
+      let is_bind = false;
+      let expected_bind_opts = into_arg_vec(&[]);
+      let expected_remount_opts = into_arg_vec(&[]);
+      let expected_remount_opts_sensitive = into_arg_vec(&["user=foo", "pass=bar"]);
+
+      make_bind_opts_sensitive(
+        &mount_opts,
+        &mount_opts_sensitive,
+        is_bind,
+        &expected_bind_opts,
+        &expected_remount_opts,
+        &expected_remount_opts_sensitive,
+      );
+    }
+
+    #[test]
+    fn case5() {
+      let mount_opts = into_arg_vec(&["vers=2", "bind", "ro", "_netdev"]);
+      let mount_opts_sensitive = into_arg_vec(&["user=foo", "remount", "pass=bar"]);
+      let is_bind = true;
+      let expected_bind_opts = into_arg_vec(&["bind", "_netdev"]);
+      let expected_remount_opts = into_arg_vec(&["bind", "remount", "vers=2", "ro", "_netdev"]);
+      let expected_remount_opts_sensitive = into_arg_vec(&["user=foo", "pass=bar"]);
+
+      make_bind_opts_sensitive(
+        &mount_opts,
+        &mount_opts_sensitive,
+        is_bind,
+        &expected_bind_opts,
+        &expected_remount_opts,
+        &expected_remount_opts_sensitive,
+      );
+    }
+
+    #[test]
+    fn case6() {
+      let mount_opts = into_arg_vec(&["vers=2", "bind", "ro", "_netdev"]);
+      let mount_opts_sensitive = into_arg_vec(&["user=foo", "remount", "pass=bar"]);
+      let is_bind = true;
+      let expected_bind_opts = into_arg_vec(&["bind", "_netdev"]);
+      let expected_remount_opts = into_arg_vec(&["bind", "remount", "vers=2", "ro", "_netdev"]);
+      let expected_remount_opts_sensitive = into_arg_vec(&["user=foo", "pass=bar"]);
+
+      make_bind_opts_sensitive(
+        &mount_opts,
+        &mount_opts_sensitive,
+        is_bind,
+        &expected_bind_opts,
+        &expected_remount_opts,
+        &expected_remount_opts_sensitive,
+      );
     }
   }
 }
