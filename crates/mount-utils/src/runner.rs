@@ -551,5 +551,24 @@ mod tests {
         &expected_remount_opts_sensitive,
       );
     }
+
+    #[test]
+    fn case7() {
+      let mount_opts = into_arg_vec(&["vers=2", "bind", "ro"]);
+      let mount_opts_sensitive = into_arg_vec(&["user=foo", "remount", "pass=bar", "_netdev"]);
+      let is_bind = true;
+      let expected_bind_opts = into_arg_vec(&["bind", "_netdev"]);
+      let expected_remount_opts = into_arg_vec(&["bind", "remount", "vers=2", "ro", "_netdev"]);
+      let expected_remount_opts_sensitive = into_arg_vec(&["user=foo", "pass=bar"]);
+
+      make_bind_opts_sensitive(
+        &mount_opts,
+        &mount_opts_sensitive,
+        is_bind,
+        &expected_bind_opts,
+        &expected_remount_opts,
+        &expected_remount_opts_sensitive,
+      );
+    }
   }
 }
