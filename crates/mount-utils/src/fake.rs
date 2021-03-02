@@ -1,9 +1,5 @@
 use crate::{runner::MounterImpl, Arg, MountError, MountPoint, Result};
-use std::{
-  collections::HashMap,
-  path::Path,
-  sync::{Arc, Mutex},
-};
+use std::{collections::HashMap, path::Path, sync::Mutex};
 use tracing::info;
 
 #[derive(Clone)]
@@ -135,7 +131,7 @@ impl MounterImpl for FakeMounter {
     self.mount_sensitive(source, target, fstype, options, sensitive_options)
   }
 
-  fn unmount(&self, target: Arg<Path>, force_after: Option<std::time::Duration>) -> Result<()> {
+  fn unmount(&self, target: Arg<Path>, _: Option<std::time::Duration>) -> Result<()> {
     let mut inner = self.0.lock().unwrap();
 
     // If target is a symlink, get its absolute path

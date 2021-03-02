@@ -198,10 +198,10 @@ fn dispatcher() -> Result<&'static MounterDispatcher> {
       std::thread::Builder::new()
         .name("mount-utils:dispatch".into())
         .spawn(move || {
-          let mut msg_count = 0usize;
+          // let mut msg_count = 0usize;
 
           while let Ok(msg) = receiver.recv() {
-            msg_count = msg_count + 1;
+            // msg_count += 1;
             if let Err(e) = catch_unwind(move || {
               let MounterMessage { span, run } = msg;
               run(span)
@@ -284,7 +284,7 @@ where
 async fn read<R>(receiver: Receiver<Result<R>>) -> Result<R> {
   match receiver.await {
     Ok(r) => r,
-    Err(cancelled) => Err(MountError::new("request was cancelled (thread paniced?)")),
+    Err(_) => Err(MountError::new("request was cancelled (thread paniced?)")),
   }
 }
 
@@ -292,7 +292,7 @@ async fn read<R>(receiver: Receiver<Result<R>>) -> Result<R> {
 // use in case of bind mount, due to the fact that bind mount doesn't respect mount options.
 // The list equals:
 //   options - 'bind' + 'remount' (no duplicate)
-pub(crate) fn make_bind_opts(opts: &[Arg]) -> (bool, Vec<Arg>, Vec<Arg>) {
+pub fn make_bind_opts(opts: &[Arg]) -> (bool, Vec<Arg>, Vec<Arg>) {
   let (bind, bind_opts, bind_remount_opts, _) = make_bind_opts_sensitive(opts, &[]);
   (bind, bind_opts, bind_remount_opts)
 }
@@ -302,7 +302,7 @@ pub(crate) fn make_bind_opts(opts: &[Arg]) -> (bool, Vec<Arg>, Vec<Arg>) {
 // options and ensures the sensitiveOptions are never logged. This method should
 // be used by callers that pass sensitive material (like passwords) as mount
 // options.
-pub(crate) fn make_bind_opts_sensitive(
+pub fn make_bind_opts_sensitive(
   opts: &[Arg],
   opts_sensitive: &[Arg],
 ) -> (bool, Vec<Arg>, Vec<Arg>, Vec<Arg>) {

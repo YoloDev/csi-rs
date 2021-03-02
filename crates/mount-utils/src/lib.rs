@@ -15,6 +15,7 @@ mod runner;
 mod utils;
 
 pub use arguments::*;
+pub use runner::{make_bind_opts, make_bind_opts_sensitive};
 
 use async_trait::async_trait;
 use futures::future::BoxFuture;
@@ -199,9 +200,9 @@ impl MountPoint {
     self.pass
   }
 
-  pub fn matches(&self, dir: Arg<Path>) -> bool {
-    // is_mount_point_match(&self, dir)
-    todo!()
+  #[inline]
+  pub(crate) fn matches(&self, dir: Arg<Path>) -> bool {
+    is_mount_point_match(&self, dir)
   }
 }
 

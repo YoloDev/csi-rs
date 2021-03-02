@@ -1,7 +1,7 @@
 use crate::Arg;
 use std::{
   ffi::{OsStr, OsString},
-  path::{Component, Components, Path, PathBuf},
+  path::{Component, Path, PathBuf},
 };
 use thiserror::Error;
 
@@ -132,15 +132,4 @@ mod tests {
       .ok()
       .map(|p| (*p.to_string_lossy()).to_owned())
   }
-
-  // #[test]
-  // fn is_parent_of() {
-  //   struct Test {
-  //     name: &'static str,
-  //     full_path: &'static Path,
-  //     base_path: &'static Path,
-  //     is_parent: bool,
-  //   }
-
-  // }
 }

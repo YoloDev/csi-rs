@@ -34,13 +34,13 @@ impl<B: ?Sized + 'static> Borrow<B> for CowArc<B> {
 }
 
 impl<B: ?Sized + 'static> CowArc<B> {
-  pub const fn is_borrowed(&self) -> bool {
-    matches!(self, CowArc::BorrowedStatic(_))
-  }
+  // pub const fn is_borrowed(&self) -> bool {
+  //   matches!(self, CowArc::BorrowedStatic(_))
+  // }
 
-  pub const fn is_owned(&self) -> bool {
-    matches!(self, CowArc::OwnedArc(_))
-  }
+  // pub const fn is_owned(&self) -> bool {
+  //   matches!(self, CowArc::OwnedArc(_))
+  // }
 
   pub fn into_owned(self) -> <B as ToOwned>::Owned
   where

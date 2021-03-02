@@ -111,7 +111,7 @@ impl From<String> for Arg<Path> {
 
 impl From<&'static Path> for Arg<Path> {
   fn from(value: &'static Path) -> Self {
-    Arg(CowArc::BorrowedStatic(value.as_ref()))
+    Arg(CowArc::BorrowedStatic(value))
   }
 }
 

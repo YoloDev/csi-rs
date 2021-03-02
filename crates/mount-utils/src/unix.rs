@@ -347,7 +347,7 @@ impl OsMounter {
   }
 }
 
-pub fn is_mount_point_match(mp: &MountPoint, dir: Arg<Path>) -> bool {
+pub(crate) fn is_mount_point_match(mp: &MountPoint, dir: Arg<Path>) -> bool {
   let deleted_dir = format!("{}\\040(deleted)", dir.display());
   let deleted_dir: &Path = deleted_dir.as_ref();
   *mp.path() == dir || **mp.path() == *deleted_dir
