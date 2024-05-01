@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-async-trait = "0.1"
+async-trait = "0.1.80"
 cfg-if = "1"
 crossbeam = "0.8"
 duct = "0.13"
