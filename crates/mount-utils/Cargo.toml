@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 async-trait = "0.1"
 cfg-if = "1"
-crossbeam = "0.8"
+crossbeam = "0.8.4"
 duct = "0.13"
 futures = "0.3"
 libc = "0.2"
