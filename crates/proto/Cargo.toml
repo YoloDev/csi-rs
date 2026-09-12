@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 async-trait = "0.1"
-bitflags = "1"
+bitflags = "2"
 lazy_static = "1"
 prost = "0.7"
 prost-types = "0.7"
